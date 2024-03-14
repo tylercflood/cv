@@ -1,29 +1,22 @@
+import numpy as np
 import cv2
-from cvzone.FaceDetectionModule import FaceDetector
 
 cap = cv2.VideoCapture(0)
-
-cap.set(3, 640) # width 
-cap.set(4, 480) # height
-
-detector = FaceDetector(minDetectionCon=0.9) # confidence level
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
 while True:
-    success, img = cap.read()
-    img, bboxs = detector.findFaces(img, draw=True)
+    ret, frame = cap.read()
 
-    if bboxs:
-        for i, bbox in enumerate(bboxs):
-            x,y,w,h = bbox['bbox']
-            if x < 0: x = 0
-            if y <0: y = 0
-            imgCrop = img[y:y+h,x:x+w]
-            imgBlur = cv2.blur(imgCrop, (35, 35))
-            img[y:y+h,x:x+w] = imgBlur
-            # cv2.imshow(f'Image Cropped {i}', imgCrop)
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+    for (x, y, w, h) in faces:
+        face_region = frame[y:y+h, x:x+w]  # extract face region
+        blurred_face = cv2.GaussianBlur(face_region, (99, 99), 30)
+        frame[y:y+h, x:x+w] = blurred_face
 
-    
-    cv2.imshow("Webcam", img)
+
+    cv2.imshow('webcam', frame)
+
     if cv2.waitKey(1) == ord('q'):
         break
 
